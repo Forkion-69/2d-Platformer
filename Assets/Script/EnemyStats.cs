@@ -9,6 +9,7 @@ public class EnemyStats : ScriptableObject
 
     [Range(0.01f, 5f)] public float turnDetectionRayLength = 0.1f;
     public LayerMask turnableLayerMask;
+    public bool ShowDebug;
 
     [Header ("Goombas Stats")]
     [Range(1f,50f)] public float goombaSpeed = 5f;

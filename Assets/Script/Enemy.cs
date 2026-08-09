@@ -8,6 +8,7 @@ public class Enemy : MonoBehaviour
     [SerializeField] private string currentEnemyType;
     public EnemyStats enemyStats;
 
+
     [SerializeField]private Collider2D _bodyCol;
     [SerializeField]private Collider2D _feetCol;
 
@@ -88,10 +89,11 @@ public class Enemy : MonoBehaviour
 
         _turnRayCastL = Physics2D.BoxCast(boxCastOriginL,boxCastSize,90f,Vector2.left,enemyStats.turnDetectionRayLength, enemyStats.turnableLayerMask);
         _turnRayCastR = Physics2D.BoxCast(boxCastOriginR,boxCastSize,90f,Vector2.right,enemyStats.turnDetectionRayLength, enemyStats.turnableLayerMask);
-
-        Debug.DrawRay(new Vector3(boxCastOriginL.x,boxCastOriginL.y,0),Vector3.left * enemyStats.turnDetectionRayLength, Color.red,5,false);
-        Debug.DrawRay(new Vector3(boxCastOriginR.x,boxCastOriginR.y,0),Vector3.right * enemyStats.turnDetectionRayLength, Color.red,5,false);
-
+        
+        if(enemyStats.ShowDebug){
+        Debug.DrawRay(new Vector3(boxCastOriginL.x,boxCastOriginL.y,0),Vector3.left * enemyStats.turnDetectionRayLength * 4, Color.red,0,false);
+        Debug.DrawRay(new Vector3(boxCastOriginR.x,boxCastOriginR.y,0),Vector3.right * enemyStats.turnDetectionRayLength * 4, Color.red,0,false);
+        }
         if(_turnRayCastL.collider != null)
         {
             Debug.Log("HIT WALL ON LEFT");

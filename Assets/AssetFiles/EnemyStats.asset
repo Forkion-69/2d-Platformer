@@ -16,6 +16,7 @@ MonoBehaviour:
   turnableLayerMask:
     serializedVersion: 2
     m_Bits: 8
+  ShowDebug: 1
   goombaSpeed: 45
   goombaHealth: 5
   goombaDamage: 2
