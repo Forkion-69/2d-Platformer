@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using Unity.Mathematics;
 using UnityEngine;
 
 public class Enemy : MonoBehaviour
@@ -16,21 +17,27 @@ public class Enemy : MonoBehaviour
 
     private int _enemyHealth;
     
-    //move vars
-    //common
+//move vars
+//common
     
     private float _movementSpeed;
     private bool _isfacingRight;
 
-    //Springy
+//Springy
 
     private float jumpInitialVelocity;
 
-    //collision vars
+//Shooter
+    private bool _isShoooting = false;
+
+//collision vars
     private RaycastHit2D _turnRayCastL;
     private RaycastHit2D _turnRayCastR;
+    private bool _hitwall;
+    private float _hitWallTimer = 0.5f;
     private RaycastHit2D _groundRayCast;
-    private bool _hitWall;
+    private RaycastHit2D _sightRaycastL;
+    private RaycastHit2D _sightRaycastR;
     private bool _isGrounded;
 
     private void Awake()
@@ -42,11 +49,16 @@ public class Enemy : MonoBehaviour
             _movementSpeed = enemyStats.goombaSpeed;
             _enemyHealth = enemyStats.goombaHealth;
         }
-        if(currentEnemyType == "Springy")
+        else if(currentEnemyType == "Springy")
         {
             jumpInitialVelocity = MathF.Abs(Physics2D.gravity.y) * enemyStats.timeTillJumpApex;
             _movementSpeed = enemyStats.springySpeed;
             _enemyHealth = enemyStats.springyHealth;
+        }
+        else if(currentEnemyType == "Shooter")
+        {
+            _movementSpeed = enemyStats.shooterSpeed;
+            _enemyHealth = enemyStats.shooterHealth;
         }
         
         rb = GetComponent<Rigidbody2D>();
@@ -61,25 +73,53 @@ public class Enemy : MonoBehaviour
     {
         Move();
         WallHit();
-        IsGrounded();
+        if(currentEnemyType == "Springy")
+            IsGrounded();
+        if(currentEnemyType == "Shooter")
+            LineOfSightCast();
+        
     }
 
-    //movement
+//movement
 
     private void Move()
     {
+
+        
         Vector2 TargetVelocity = Vector2.zero;
+        Turn();
 
-
-        if (_isfacingRight)
+        if (_isfacingRight && !_isShoooting){
             TargetVelocity = new Vector2(_movementSpeed * Time.fixedDeltaTime, rb.linearVelocityY);
-        else if(!_isfacingRight)
+        }
+        else if(!_isfacingRight && !_isShoooting)
+        {
             TargetVelocity = new Vector2(-_movementSpeed * Time.fixedDeltaTime, rb.linearVelocityY);
-
+        }
+        else if(_isShoooting)
+        {
+            TargetVelocity = new Vector2(0,rb.linearVelocity.y);
+        }
+        
         rb.linearVelocity = TargetVelocity;
     }
 
-    //collision Check
+    private void Turn()
+    {  
+        _hitWallTimer -= Time.deltaTime;
+
+        if(_hitWallTimer < 0){
+
+            if(_hitwall)
+            {   if(_isfacingRight)
+                    transform.Rotate(0f,180f,0);
+                else{transform.Rotate(0f,-180f,0f);}
+                _hitWallTimer = 0.5f;
+            }
+        }
+    }
+
+//collision Check
 
     private void WallHit()
     {
@@ -91,24 +131,34 @@ public class Enemy : MonoBehaviour
         _turnRayCastR = Physics2D.BoxCast(boxCastOriginR,boxCastSize,90f,Vector2.right,enemyStats.turnDetectionRayLength, enemyStats.turnableLayerMask);
         
         if(enemyStats.ShowDebug){
-        Debug.DrawRay(new Vector3(boxCastOriginL.x,boxCastOriginL.y,0),Vector3.left * enemyStats.turnDetectionRayLength * 4, Color.red,0,false);
-        Debug.DrawRay(new Vector3(boxCastOriginR.x,boxCastOriginR.y,0),Vector3.right * enemyStats.turnDetectionRayLength * 4, Color.red,0,false);
+        Debug.DrawRay(new Vector3(boxCastOriginL.x,boxCastOriginL.y,0),Vector3.left * enemyStats.turnDetectionRayLength * 2, Color.red,0,false);
+        Debug.DrawRay(new Vector3(boxCastOriginR.x,boxCastOriginR.y,0),Vector3.right * enemyStats.turnDetectionRayLength * 2, Color.red,0,false);
         }
+
         if(_turnRayCastL.collider != null)
         {
             Debug.Log("HIT WALL ON LEFT");
-            _hitWall = true;
             _isfacingRight = true;
+            _hitwall = true;
         }
-        else{_hitWall = false;}
+        else
+        {
+            _hitwall = false;
+        }
+            
         if(_turnRayCastR.collider != null)
-
         {   Debug.Log("HIT WALL ON RIGHT");
-            _hitWall = true;
             _isfacingRight = false;
+            _hitwall = true;
         }
-        else{_hitWall = false;}
+        else
+        {
+            _hitwall = false;
+        }
+        
     }
+    
+//Springy
 
     private IEnumerator JumpSpringy()
     {
@@ -117,13 +167,12 @@ public class Enemy : MonoBehaviour
             yield return new WaitForSeconds(enemyStats.jumpCycle);
             if(_isGrounded)
             {
-                Debug.Log("SHOULD JUMP");
+                //Debug.Log("SHOULD JUMP");
                 rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpInitialVelocity);
             }
                 
         }
     }
-
     private void IsGrounded()
     {
         Vector2 boxCastOrigin = new Vector2(_feetCol.bounds.center.x,_feetCol.bounds.min.y);
@@ -137,6 +186,37 @@ public class Enemy : MonoBehaviour
         }else {_isGrounded = false;}
     }
     
+//Shooter
+    private void LineOfSightCast()
+    {   
+        Vector2 RayCastOriginL = new Vector2(_bodyCol.bounds.min.x, _bodyCol.bounds.center.y);
+        Vector2 RayCastOriginR = new Vector2(_bodyCol.bounds.max.x, _bodyCol.bounds.center.y);
+        _sightRaycastL = Physics2D.Raycast(RayCastOriginL,Vector2.left,enemyStats.shooterRayLength,enemyStats.playerLayer);
+        _sightRaycastR = Physics2D.Raycast(RayCastOriginR,Vector2.right,enemyStats.shooterRayLength,enemyStats.playerLayer);
 
+        if(_sightRaycastL.collider != null)
+        {
+            _isShoooting = true;
+            Debug.Log("GET ON THE GROUND, NOW " + _isShoooting);
+
+        }else{_isShoooting = false;}
+        if(_sightRaycastR.collider != null)
+        {
+            _isShoooting = true;
+            Debug.Log("GET ON THE GROUND, NOW " + _isShoooting);
+        }else{_isShoooting = false;}
+    }
+    private void Shoot()
+    {
+        if (_isShoooting && _sightRaycastL.collider != null)
+        {
+            
+        }
+        else if(_isShoooting && _sightRaycastR.collider != null)
+        {
+            
+        }
+        else{return;}
+    }
 
 }

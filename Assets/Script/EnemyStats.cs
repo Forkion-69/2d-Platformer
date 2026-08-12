@@ -28,9 +28,10 @@ public class EnemyStats : ScriptableObject
     
 
     [Header ("Shooter Stats")]
-    [Range(1f,50f)] public float shooterSpeed;
-    [Range(1f,150f)] public int shooterHealth;
-    [Range(1f,150f)] public float shooterWalkDistance;
-    [Range(1f,10f)] public float shooterDamage;
-    [Range(0.5f, 20f)] public float shooterRayLength;
+    public LayerMask playerLayer;
+    [Range(1f,50f)] public float shooterSpeed = 35f;
+    [Range(1f,150f)] public int shooterHealth = 10;
+    [Range(1f,10f)] public float shooterDamage =  6f;
+    [Range(0.5f, 20f)] public float shooterRayLength = 0.4f;
+    
 }
