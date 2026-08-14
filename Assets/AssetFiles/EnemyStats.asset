@@ -29,10 +29,11 @@ MonoBehaviour:
   timeTillJumpApex: 0.7
   groundDetectionRayLength: 0.1
   jumpCycle: 5
+  shooterBullet: {fileID: 0}
   playerLayer:
     serializedVersion: 2
     m_Bits: 64
   shooterSpeed: 45
   shooterHealth: 15
   shooterDamage: 7
-  shooterRayLength: 4
+  shooterRayLength: 8

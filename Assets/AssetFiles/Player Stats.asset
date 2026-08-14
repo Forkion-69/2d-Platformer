@@ -20,7 +20,7 @@ MonoBehaviour:
   maxRunSpeed: 15
   jumpHeight: 4.5
   jumpHeightCompensationFactor: 1.054
-  gravityOnReleaseMultiplier: 1.5
+  gravityOnReleaseMultiplier: 1.4
   timeTillJumpApex: 0.35
   maxFallSpeed: 26
   maxPositiveVelocity: 50
@@ -33,8 +33,8 @@ MonoBehaviour:
   showDebugIsGroundedBox: 1
   showWalkJumpArc: 0
   showRunJumpArc: 0
-  stopOnCollision: 1
-  drawRight: 1
+  stopOnCollision: 0
+  drawRight: 0
   ArcResolution: 20
   VisualizationSteps: 90
   groundCheckLayer:

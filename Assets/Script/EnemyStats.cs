@@ -28,6 +28,7 @@ public class EnemyStats : ScriptableObject
     
 
     [Header ("Shooter Stats")]
+    public GameObject shooterBullet;
     public LayerMask playerLayer;
     [Range(1f,50f)] public float shooterSpeed = 35f;
     [Range(1f,150f)] public int shooterHealth = 10;

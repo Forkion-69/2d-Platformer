@@ -3,6 +3,8 @@ using System.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 
+[RequireComponent(typeof(Rigidbody2D))]
+
 public class Enemy : MonoBehaviour
 {
     [Header("References")]
@@ -12,7 +14,7 @@ public class Enemy : MonoBehaviour
 
     [SerializeField]private Collider2D _bodyCol;
     [SerializeField]private Collider2D _feetCol;
-
+    
     private Rigidbody2D rb;
 
     private int _enemyHealth;
@@ -29,14 +31,13 @@ public class Enemy : MonoBehaviour
 
 //Shooter
     private bool _isShoooting = false;
+    private int _shootingDirection;
+    private GameObject _bullet;
 
 //collision vars
     private RaycastHit2D _turnRayCastL;
     private RaycastHit2D _turnRayCastR;
-    private bool _hitwall;
-    private float _hitWallTimer = 0.5f;
     private RaycastHit2D _groundRayCast;
-    private RaycastHit2D _sightRaycastL;
     private RaycastHit2D _sightRaycastR;
     private bool _isGrounded;
 
@@ -57,16 +58,18 @@ public class Enemy : MonoBehaviour
         }
         else if(currentEnemyType == "Shooter")
         {
+            _bullet = enemyStats.shooterBullet;
             _movementSpeed = enemyStats.shooterSpeed;
             _enemyHealth = enemyStats.shooterHealth;
+            _shootingDirection = 1;
         }
         
         rb = GetComponent<Rigidbody2D>();
     }
 
     private void Start()
-    {
-        StartCoroutine("JumpSpringy");
+    {   
+        StartCoroutine(nameof(JumpSpringy));
     }
 
     private void FixedUpdate()
@@ -85,9 +88,8 @@ public class Enemy : MonoBehaviour
     private void Move()
     {
 
-        
         Vector2 TargetVelocity = Vector2.zero;
-        Turn();
+
 
         if (_isfacingRight && !_isShoooting){
             TargetVelocity = new Vector2(_movementSpeed * Time.fixedDeltaTime, rb.linearVelocityY);
@@ -104,21 +106,6 @@ public class Enemy : MonoBehaviour
         rb.linearVelocity = TargetVelocity;
     }
 
-    private void Turn()
-    {  
-        _hitWallTimer -= Time.deltaTime;
-
-        if(_hitWallTimer < 0){
-
-            if(_hitwall)
-            {   if(_isfacingRight)
-                    transform.Rotate(0f,180f,0);
-                else{transform.Rotate(0f,-180f,0f);}
-                _hitWallTimer = 0.5f;
-            }
-        }
-    }
-
 //collision Check
 
     private void WallHit()
@@ -131,31 +118,22 @@ public class Enemy : MonoBehaviour
         _turnRayCastR = Physics2D.BoxCast(boxCastOriginR,boxCastSize,90f,Vector2.right,enemyStats.turnDetectionRayLength, enemyStats.turnableLayerMask);
         
         if(enemyStats.ShowDebug){
-        Debug.DrawRay(new Vector3(boxCastOriginL.x,boxCastOriginL.y,0),Vector3.left * enemyStats.turnDetectionRayLength * 2, Color.red,0,false);
-        Debug.DrawRay(new Vector3(boxCastOriginR.x,boxCastOriginR.y,0),Vector3.right * enemyStats.turnDetectionRayLength * 2, Color.red,0,false);
+        Debug.DrawRay(new Vector3(boxCastOriginL.x,boxCastOriginL.y,0),Vector3.left * enemyStats.turnDetectionRayLength * 2, Color.crimson,0,false);
+        Debug.DrawRay(new Vector3(boxCastOriginR.x,boxCastOriginR.y,0),Vector3.right * enemyStats.turnDetectionRayLength * 2, Color.crimson,0,false);
         }
 
         if(_turnRayCastL.collider != null)
         {
-            Debug.Log("HIT WALL ON LEFT");
             _isfacingRight = true;
-            _hitwall = true;
-        }
-        else
-        {
-            _hitwall = false;
-        }
-            
+            transform.Rotate(0f,180f,0f);
+            _shootingDirection = 1;
+        } 
         if(_turnRayCastR.collider != null)
-        {   Debug.Log("HIT WALL ON RIGHT");
+        { 
             _isfacingRight = false;
-            _hitwall = true;
+            transform.Rotate(0f,-180f,0f);
+            _shootingDirection = -1;
         }
-        else
-        {
-            _hitwall = false;
-        }
-        
     }
     
 //Springy
@@ -189,30 +167,22 @@ public class Enemy : MonoBehaviour
 //Shooter
     private void LineOfSightCast()
     {   
-        Vector2 RayCastOriginL = new Vector2(_bodyCol.bounds.min.x, _bodyCol.bounds.center.y);
+
         Vector2 RayCastOriginR = new Vector2(_bodyCol.bounds.max.x, _bodyCol.bounds.center.y);
-        _sightRaycastL = Physics2D.Raycast(RayCastOriginL,Vector2.left,enemyStats.shooterRayLength,enemyStats.playerLayer);
-        _sightRaycastR = Physics2D.Raycast(RayCastOriginR,Vector2.right,enemyStats.shooterRayLength,enemyStats.playerLayer);
+        _sightRaycastR = Physics2D.Raycast(RayCastOriginR,new Vector2(_shootingDirection,0),enemyStats.shooterRayLength,enemyStats.playerLayer);
 
-        if(_sightRaycastL.collider != null)
-        {
-            _isShoooting = true;
-            Debug.Log("GET ON THE GROUND, NOW " + _isShoooting);
+        if(enemyStats.ShowDebug)
+            Debug.DrawRay(new Vector3(_bodyCol.bounds.max.x, _bodyCol.bounds.center.y,0),new Vector3(_shootingDirection,0,0) * enemyStats.shooterRayLength, Color.red,0,false);
 
-        }else{_isShoooting = false;}
         if(_sightRaycastR.collider != null)
         {
             _isShoooting = true;
-            Debug.Log("GET ON THE GROUND, NOW " + _isShoooting);
+            // Debug.Log("GET ON THE GROUND, NOW " + _isShoooting);
         }else{_isShoooting = false;}
     }
     private void Shoot()
     {
-        if (_isShoooting && _sightRaycastL.collider != null)
-        {
-            
-        }
-        else if(_isShoooting && _sightRaycastR.collider != null)
+        if (_isShoooting && _isfacingRight)
         {
             
         }
